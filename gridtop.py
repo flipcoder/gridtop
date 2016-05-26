@@ -16,6 +16,9 @@ OFFSET = [ 11, 68 ]
 
 DELAY = 1.0
 
+SNAP_X = [0,1920,1920*2,1920*3]
+SNAP_Y = [0,1080]
+
 class Window:
     def __init__(self, name, line,):
         self.name = name
@@ -165,5 +168,79 @@ elif sys.argv[1]=="hsplit":
             s[0]/2,s[1]
         )
     ])
+elif sys.argv[1]=="fill":
+    np = []
+    ns = []
+    p = 0
+    s = 0
+    
+    for w in windows:
+        p = copy(active_window.pos)
+        s = copy(active_window.size)
+        if p[0] >= w.pos[0] + w.size[0]:
+            np += [(w.pos[0] + w.size[0],p[1])]
+    for snap in SNAP_X:
+        if p[0] >= snap:
+            np += [(snap,0)]
+    if np:
+        np = sorted(np, cmp=lambda a,b: b[0] - a[0])[0]
+    else:
+        np = copy(active_window.pos)
 
+    active_window.pos = (np[0],active_window.pos[1])
+    
+    for w in windows:
+        p = copy(active_window.pos);
+        s = copy(active_window.size)
+        if p[0] + s[0] <= w.pos[0]:
+            ns += [(w.pos[0]-p[0],s[1])]
+    for snap in SNAP_Y:
+        if p[1] + s[1] <= snap:
+            ns += [(snap-p[1],0)]
+    if ns:
+        ns = sorted(ns, cmp=lambda a,b: a[0] - b[0])[0]
+    else:
+        ns = copy(active_window.size)
+    
+    active_window.size = (ns[0],active_window.size[1])
+
+    np = []
+    for w in windows:
+        p = copy(active_window.pos)
+        s = copy(active_window.size)
+        if p[1] >= w.pos[1] + w.size[1]:
+            np += [(p[0], w.pos[1] + w.size[1])]
+    for snap in SNAP_Y:
+        if p[1] >= snap:
+            np += [(0,snap)]
+    if np:
+        np = sorted(np, cmp=lambda a,b: b[1] - a[1])[0]
+    else:
+        np = active_window.pos
+    
+    active_window.pos = (active_window.pos[0],np[1])
+
+    ns = []
+    for w in windows:
+        p = copy(active_window.pos)
+        s = copy(active_window.size)
+        if p[1] + s[1] <= w.pos[1]:
+            ns += [(s[0], w.pos[1]-p[1])]
+    for snap in SNAP_Y:
+        if p[1] + s[1] <= snap:
+            ns += [(0,snap-p[1])]
+    if ns:
+        ns = sorted(ns, cmp=lambda a,b: a[1] - b[1])[0]
+    else:
+        ns = active_window.size
+    
+    active_window.size = (active_window.size[0],ns[1])
+
+    subprocess.call([
+        'wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
+            active_window.pos[0]-OFFSET[0],
+            active_window.pos[1]-OFFSET[1],
+            active_window.size[0],active_window.size[1]
+        )
+    ])
 
