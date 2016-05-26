@@ -4,6 +4,13 @@ import sys
 import subprocess
 from copy import copy
 
+BLACKLIST = [
+    'Desktop',
+    'nemo',
+    'plank',
+    'wmctrl -l -G'
+]
+
 class Window:
     def __init__(self, name, line,):
         self.name = name
@@ -46,11 +53,14 @@ lines = lines[:-1]
 for i in range(len(lines)):
     lines[i] = lines[i].split(' ')
     lines[i] = filter(lambda x: x, lines[i])
-    name = ' '.join(lines[i][6:])
+    name = ' '.join(lines[i][7:])
     lines[i] = lines[i][:6]
+    print name
+    if name in BLACKLIST:
+        continue
     windows += [Window(name, lines[i])]
-    if windows[i].num == active_window_num:
-        windows[i].active = True
+    if windows[-1].num == active_window_num:
+        windows[-1].active = True
 
 if sys.argv[1]=="left":
     all_windows = sorted(windows, cmp=lambda x,y: x.get_x() - y.get_x())
@@ -97,4 +107,6 @@ elif sys.argv[1]=="down":
         idx = next(1, windows)
         if idx != None:
             windows[idx].activate()
+elif sys.argv[1]=="close":
+    subprocess.call(['xdotool', 'getactivewindow', 'windowkill'])
 
