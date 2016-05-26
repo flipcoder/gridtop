@@ -12,7 +12,8 @@ BLACKLIST = [
     'wmctrl -l -G'
 ]
 
-OFFSET = [ 11, 68 ]
+# OFFSET = [ 11, 68 ]
+OFFSET = [0, 0]
 
 DELAY = 1.0
 
@@ -122,7 +123,7 @@ elif sys.argv[1]=="down":
         if idx != None:
             windows[idx].activate()
 elif sys.argv[1]=="close":
-    subprocess.call(['xdotool', 'getactivewindow', 'windowunmap'])
+    subprocess.call(['xdotool', 'getactivewindow', 'windowkill'])
 elif sys.argv[1]=="maximize":
     subprocess.call([
         'wmctrl', '-r', ':ACTIVE:', '-b', 'toggle,maximized_vert,maximized_horz'
@@ -195,7 +196,7 @@ elif sys.argv[1]=="fill":
         if p[0] + s[0] <= w.pos[0]:
             ns += [(w.pos[0]-p[0],s[1])]
     for snap in SNAP_Y:
-        if p[1] + s[1] <= snap:
+        if p[0] + s[0] <= snap:
             ns += [(snap-p[1],0)]
     if ns:
         ns = sorted(ns, cmp=lambda a,b: a[0] - b[0])[0]
