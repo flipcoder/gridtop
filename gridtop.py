@@ -60,7 +60,6 @@ if sys.argv[1]=="left":
     windows = filter(lambda x: active.pos[1] + active.size[1] >= x.pos[1], windows)
     windows = filter(lambda x: active.pos[1] <= x.pos[1] + x.size[1], windows)
     windows = filter(lambda x: active == x or active.center_x() != x.center_x(), windows)
-    print windows
     if windows:
         idx = next(-1, windows)
         if idx != None:
@@ -72,8 +71,10 @@ elif sys.argv[1]=="right":
     windows = filter(lambda x: active.pos[1] + active.size[1] >= x.pos[1], windows)
     windows = filter(lambda x: active.pos[1] <= x.pos[1] + x.size[1], windows)
     windows = filter(lambda x: active == x or active.center_x() != x.center_x(), windows)
-    idx = next(1, windows)
-    windows[idx].activate()
+    if windows:
+        idx = next(1, windows)
+        if idx != None:
+            windows[idx].activate()
 elif sys.argv[1]=="up":
     windows = sorted(windows, cmp=lambda x,y: x.get_y() - y.get_y())
     all_windows = copy(windows)
@@ -81,8 +82,10 @@ elif sys.argv[1]=="up":
     windows = filter(lambda x: active.pos[0] + active.size[0] >= x.pos[0], windows)
     windows = filter(lambda x: active.pos[0] <= x.pos[0] + x.size[0], windows)
     windows = filter(lambda x: active == x or active.center_y() != x.center_y(), windows)
-    idx = next(-1, windows)
-    windows[idx].activate()
+    if windows:
+        idx = next(-1, windows)
+        if idx != None:
+            windows[idx].activate()
 elif sys.argv[1]=="down":
     windows = sorted(windows, cmp=lambda x,y: x.get_y() - y.get_y())
     all_windows = copy(windows)
@@ -90,6 +93,8 @@ elif sys.argv[1]=="down":
     windows = filter(lambda x: active.pos[0] + active.size[0] >= x.pos[0], windows)
     windows = filter(lambda x: active.pos[0] <= x.pos[0] + x.size[0], windows)
     windows = filter(lambda x: active == x or active.center_y() != x.center_y(), windows)
-    idx = next(-1, windows)
-    windows[idx].activate()
+    if windows:
+        idx = next(1, windows)
+        if idx != None:
+            windows[idx].activate()
 
