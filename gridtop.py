@@ -136,7 +136,7 @@ elif sys.argv[1]=="down":
         if idx != None:
             windows[idx].activate()
 elif sys.argv[1]=="close":
-    subprocess.call(['xdotool', 'getactivewindow', 'windowkill'])
+    subprocess.call(['wmctrl', '-c', ':ACTIVE:'])
 elif sys.argv[1]=="maximize":
     subprocess.call([
         'wmctrl', '-r', ':ACTIVE:', '-b', 'toggle,maximized_vert,maximized_horz'
@@ -249,12 +249,18 @@ elif sys.argv[1]=="fill":
         ns = active_window.size
     
     active_window.size = (active_window.size[0],ns[1])
+    
+    x = active_window.pos[0]
+    y = active_window.pos[1]
+    
+    diffx = max(0,x-OFFSET[0]) - (x-OFFSET[0])
+    diffy = max(0,y-OFFSET[1]) - (y-OFFSET[1])
 
     subprocess.call([
         'wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
-            active_window.pos[0]-OFFSET[0],
-            active_window.pos[1]-OFFSET[1],
-            active_window.size[0],active_window.size[1]
+            x-OFFSET[0], y-OFFSET[1],
+            active_window.size[0] - diffx,
+            active_window.size[1] - diffy
         )
     ])
 elif sys.argv[1]=="snap":
