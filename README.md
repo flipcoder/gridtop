@@ -18,7 +18,8 @@ gridtop down
 
 ### Fill
 
-The active window is expanded as far as possible on the current display
+The active window is expanded as far as possible on the current display w/o
+overlapping another window
 
 ```
 gridtop fill
@@ -32,6 +33,17 @@ Split the active window and launch an application in its space
 gridtop hsplit <application>
 gridtop vsplit <application>
 ```
+
+### Snap
+
+Snap the current window to the grid
+
+```
+gridtop snap
+```
+
+### Snap
+
 
 ## What next?
 

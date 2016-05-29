@@ -9,19 +9,32 @@ BLACKLIST = [
     'Desktop',
     'nemo',
     'plank',
-    'wmctrl -l -G'
+    'wmctrl -l -G',
+    'pcmanfm',
+    'x-caja-desktop',
+    'Bottom Expanded Edge Panel'
 ]
 
 # OFFSET = [ 11, 68 ]
-OFFSET = [0, 0]
+# OFFSET = [8, 50]
+OFFSET=[2,48]
 
 DELAY = 1.0
 
-SNAP_X = [0,1920,1920*2,1920*3]
-SNAP_Y = [0,1080]
+SCREEN_W = 1920
+SCREEN_H = 1080
+GRID_SIZE = 2
+BOTTOM_PANEL = 24
+
+# screen edges
+SNAP_X = [0,SCREEN_W,SCREEN_W*2,SCREEN_W*3]
+SNAP_Y = [0,SCREEN_H-BOTTOM_PANEL]
+
+# grid regions
+GRID = [1920 // GRID_SIZE, (1080-BOTTOM_PANEL) // GRID_SIZE]
 
 class Window:
-    def __init__(self, name, line,):
+    def __init__(self, name, line):
         self.name = name
         self.num = int(line[0], 16)
         self.desktop = int(line[1])
@@ -242,6 +255,36 @@ elif sys.argv[1]=="fill":
             active_window.pos[0]-OFFSET[0],
             active_window.pos[1]-OFFSET[1],
             active_window.size[0],active_window.size[1]
+        )
+    ])
+elif sys.argv[1]=="snap":
+    x = active_window.pos[0]
+    y = active_window.pos[1]
+    x2 = active_window.size[0]
+    y2 = active_window.size[1]
+    print x,y,x2,y2
+    x2 = int(round((x2+x+GRID[0]/2)//GRID[0])*GRID[0])
+    y2 = int(round((y2+y+GRID[1]/2)//GRID[1])*GRID[1])
+    x = int(round(x+GRID[0]/2)//GRID[0]*GRID[0])
+    y = int(round(y+GRID[1]/2)//GRID[1]*GRID[1])
+    print x,y,x2,y2
+    diffx = max(0,int(x)-OFFSET[0]) - (int(x)-OFFSET[0])
+    diffy = max(0,int(y)-OFFSET[1]) - (int(y)-OFFSET[1])
+    subprocess.call([
+        'wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
+            max(0,int(x)-OFFSET[0]),
+            max(0,int(y)-OFFSET[1]),
+            max(GRID[0],x2-x) - diffx,
+            max(GRID[1],y2-y) - diffy
+        )
+    ])
+elif sys.argv[1]=="calibrate":
+    subprocess.call([
+        'wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
+            active_window.pos[0],
+            active_window.pos[1],
+            active_window.size[0],
+            active_window.size[1]
         )
     ])
 
