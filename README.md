@@ -42,9 +42,6 @@ Snap the current window to the grid
 gridtop snap
 ```
 
-### Snap
-
-
 ## What next?
 
 Check out http://github.com/flipcoder/gridtop-old for a list of things that may be included in the future.

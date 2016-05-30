@@ -23,8 +23,9 @@ DELAY = 1.0
 
 SCREEN_W = 1920
 SCREEN_H = 1080
-GRID_SIZE = 2
+GRID_SIZE = 4
 BOTTOM_PANEL = 24
+NUM_DISPLAYS = 3
 
 # screen edges
 SNAP_X = [0,SCREEN_W,SCREEN_W*2,SCREEN_W*3]
@@ -289,6 +290,21 @@ elif sys.argv[1]=="calibrate":
         'wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
             active_window.pos[0],
             active_window.pos[1],
+            active_window.size[0],
+            active_window.size[1]
+        )
+    ])
+elif sys.argv[1]=="desktop":
+    subprocess.call(['wmctrl', '-s', sys.argv[2]])
+elif sys.argv[1]=="switchdisplay":
+    x = active_window.pos[0] + SCREEN_W,
+    if x >= NUM_DISPLAYS * SCREEN_W:
+        x = active_window.pos[0] % SCREEN_W
+    y = active_window.pos[1]
+    subprocess.call([
+        'wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
+            max(0,int(x)-OFFSET[0]),
+            max(0,int(y)-OFFSET[1]),
             active_window.size[0],
             active_window.size[1]
         )
