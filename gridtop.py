@@ -368,9 +368,9 @@ elif sys.argv[1]=="grow":
     # snap(active_window)
     sz = list(active_window.size)
     if sz[0] > sz[1]:
-        sz[1] *= 2
+        sz[1] += GRID[0]
     else:
-        sz[0] *= 2
+        sz[0] += GRID[1]
     subprocess.call(['wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
         max(0,int(active_window.pos[0])-OFFSET[0]),
         max(0,int(active_window.pos[1])-OFFSET[1]),
@@ -382,9 +382,9 @@ elif sys.argv[1] == "shrink":
     # snap(active_window)
     sz = list(active_window.size)
     if sz[0] > sz[1]:
-        sz[0] /= 2
+        sz[0] -= GRID[0]
     else:
-        sz[1] /= 2
+        sz[1] -= GRID[1]
     subprocess.call(['wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
         max(0,int(active_window.pos[0])-OFFSET[0]),
         max(0,int(active_window.pos[1])-OFFSET[1]),
