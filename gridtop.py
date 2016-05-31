@@ -5,6 +5,9 @@ import subprocess
 from copy import copy
 import time
 
+if len(sys.argv) <= 1:
+    sys.exit(1)
+
 BLACKLIST = [
     'Desktop',
     'nemo',
@@ -69,6 +72,35 @@ def active_window_idx(w):
         if w[i].active:
             return i
     return None
+
+def snap(active_window):
+    x = active_window.pos[0]
+    y = active_window.pos[1]
+    x2 = active_window.size[0]
+    y2 = active_window.size[1]
+    # print x,y,x2,y2
+    x2 = int(round((x2+x+GRID[0]/2)//GRID[0])*GRID[0])
+    y2 = int(round((y2+y+GRID[1]/2)//GRID[1])*GRID[1])
+    x = int(round(x+GRID[0]/2)//GRID[0]*GRID[0])
+    y = int(round(y+GRID[1]/2)//GRID[1]*GRID[1])
+    # print x,y,x2,y2
+    diffx = max(0,int(x)-OFFSET[0]) - (int(x)-OFFSET[0])
+    diffy = max(0,int(y)-OFFSET[1]) - (int(y)-OFFSET[1])
+    subprocess.call([
+        'wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
+            max(0,int(x)-OFFSET[0]),
+            max(0,int(y)-OFFSET[1]),
+            max(GRID[0],x2-x) - diffx,
+            max(GRID[1],y2-y) - diffy
+        )
+    ])
+
+    # just in case we need this updated after the snap call:
+    active_window.pos = (x,y)
+    active_window.size = (
+        max(GRID[0],x2-x) - diffx,
+        max(GRID[1],y2-y) - diffy
+    )
     
 windows = []
 active_window = None
@@ -83,15 +115,20 @@ def update():
         lines[i] = filter(lambda x: x, lines[i])
         name = ' '.join(lines[i][7:])
         lines[i] = lines[i][:6]
-        if name in BLACKLIST:
+        if name in BLACKLIST and lines[1]=="-1":
             continue
         windows += [Window(name, lines[i])]
         if windows[-1].num == active_window_num:
             active_window = windows[-1]
             windows[-1].active = True
+def just_this_desktop():
+    global windows
+    global active_window
+    windows = filter(lambda x: x.desktop == active_window.desktop or x.desktop == "-1", windows)
 update()
 
 if sys.argv[1]=="left":
+    just_this_desktop()
     all_windows = sorted(windows, cmp=lambda x,y: x.get_x() - y.get_x())
     windows = copy(all_windows)
     windows = sorted(windows, cmp=lambda x,y: x.get_x() - y.get_x())
@@ -104,6 +141,7 @@ if sys.argv[1]=="left":
         if idx != None:
             windows[idx].activate()
 elif sys.argv[1]=="right":
+    just_this_desktop()
     all_windows = sorted(windows, cmp=lambda x,y: x.get_x() - y.get_x())
     windows = copy(all_windows)
     active = windows[active_window_idx(windows)]
@@ -115,6 +153,7 @@ elif sys.argv[1]=="right":
         if idx != None:
             windows[idx].activate()
 elif sys.argv[1]=="up":
+    just_this_desktop()
     windows = sorted(windows, cmp=lambda x,y: x.get_y() - y.get_y())
     all_windows = copy(windows)
     active = windows[active_window_idx(windows)]
@@ -126,6 +165,7 @@ elif sys.argv[1]=="up":
         if idx != None:
             windows[idx].activate()
 elif sys.argv[1]=="down":
+    just_this_desktop()
     windows = sorted(windows, cmp=lambda x,y: x.get_y() - y.get_y())
     all_windows = copy(windows)
     active = windows[active_window_idx(windows)]
@@ -184,11 +224,11 @@ elif sys.argv[1]=="hsplit":
         )
     ])
 elif sys.argv[1]=="fill":
+    just_this_desktop()
     np = []
     ns = []
     p = 0
     s = 0
-    
     for w in windows:
         p = copy(active_window.pos)
         s = copy(active_window.size)
@@ -259,33 +299,16 @@ elif sys.argv[1]=="fill":
 
     subprocess.call([
         'wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
-            x-OFFSET[0], y-OFFSET[1],
+            max(0,x-OFFSET[0]),
+            max(0,y-OFFSET[1]),
             active_window.size[0] - diffx,
             active_window.size[1] - diffy
         )
     ])
 elif sys.argv[1]=="snap":
-    x = active_window.pos[0]
-    y = active_window.pos[1]
-    x2 = active_window.size[0]
-    y2 = active_window.size[1]
-    print x,y,x2,y2
-    x2 = int(round((x2+x+GRID[0]/2)//GRID[0])*GRID[0])
-    y2 = int(round((y2+y+GRID[1]/2)//GRID[1])*GRID[1])
-    x = int(round(x+GRID[0]/2)//GRID[0]*GRID[0])
-    y = int(round(y+GRID[1]/2)//GRID[1]*GRID[1])
-    print x,y,x2,y2
-    diffx = max(0,int(x)-OFFSET[0]) - (int(x)-OFFSET[0])
-    diffy = max(0,int(y)-OFFSET[1]) - (int(y)-OFFSET[1])
-    subprocess.call([
-        'wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
-            max(0,int(x)-OFFSET[0]),
-            max(0,int(y)-OFFSET[1]),
-            max(GRID[0],x2-x) - diffx,
-            max(GRID[1],y2-y) - diffy
-        )
-    ])
+    snap(active_window)
 elif sys.argv[1]=="calibrate":
+    # TODO: get size before and after
     subprocess.call([
         'wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
             active_window.pos[0],
@@ -294,6 +317,8 @@ elif sys.argv[1]=="calibrate":
             active_window.size[1]
         )
     ])
+    update()
+    # ...
 elif sys.argv[1]=="desktop":
     subprocess.call(['wmctrl', '-s', sys.argv[2]])
 elif sys.argv[1]=="switchdisplay":
@@ -309,4 +334,61 @@ elif sys.argv[1]=="switchdisplay":
             active_window.size[1]
         )
     ])
+elif sys.argv[1]=="move":
+    snap(active_window)
+    if sys.argv[2]=="up":
+        subprocess.call(['wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
+            max(0,int(active_window.pos[0])-OFFSET[0]),
+            max(0,int(active_window.pos[1]-GRID[1])-OFFSET[1]),
+            active_window.size[0],
+            active_window.size[1]
+        )])
+    elif sys.argv[2]=="down":
+        subprocess.call(['wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
+            max(0,int(active_window.pos[0])-OFFSET[0]),
+            max(0,int(active_window.pos[1]+GRID[1])-OFFSET[1]),
+            active_window.size[0],
+            active_window.size[1]
+        )])
+    elif sys.argv[2]=="left":
+        subprocess.call(['wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
+            max(0,int(active_window.pos[0]-GRID[0])-OFFSET[0]),
+            max(0,int(active_window.pos[1])-OFFSET[1]),
+            active_window.size[0],
+            active_window.size[1]
+        )])
+    elif sys.argv[2]=="right":
+        subprocess.call(['wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
+            max(0,int(active_window.pos[0]+GRID[0])-OFFSET[0]),
+            max(0,int(active_window.pos[1])-OFFSET[1]),
+            active_window.size[0],
+            active_window.size[1]
+        )])
+elif sys.argv[1]=="grow":
+    # snap(active_window)
+    sz = list(active_window.size)
+    if sz[0] > sz[1]:
+        sz[1] *= 2
+    else:
+        sz[0] *= 2
+    subprocess.call(['wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
+        max(0,int(active_window.pos[0])-OFFSET[0]),
+        max(0,int(active_window.pos[1])-OFFSET[1]),
+        sz[0],
+        sz[1]
+    )])
+    
+elif sys.argv[1] == "shrink":
+    # snap(active_window)
+    sz = list(active_window.size)
+    if sz[0] > sz[1]:
+        sz[0] /= 2
+    else:
+        sz[1] /= 2
+    subprocess.call(['wmctrl', '-r', ':ACTIVE:', '-e', '0,%s,%s,%s,%s' % (
+        max(0,int(active_window.pos[0])-OFFSET[0]),
+        max(0,int(active_window.pos[1])-OFFSET[1]),
+        sz[0],
+        sz[1]
+    )])
 
