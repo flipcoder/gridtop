@@ -8,13 +8,16 @@ import time
 if len(sys.argv) <= 1:
     sys.exit(1)
 
-BLACKLIST = [
+DESKTOP_BLACKLIST = [
     'Desktop',
-    'nemo',
-    'plank',
-    'wmctrl -l -G',
+    'nemo'
     'pcmanfm',
     'x-caja-desktop',
+]
+BLACKLIST = [
+    'panel',
+    'plank',
+    'wmctrl -l -G',
     'Bottom Expanded Edge Panel'
 ]
 
@@ -57,7 +60,7 @@ class Window:
         print subprocess.check_output(['wmctrl','-i','-a', str(self.num)]).split('\n')[0]
     def __repr__(self):
         c = (self.center_x(),self.center_y())
-        return "%s [%s, %s]%s" % (self.name, c[0], c[1], (" (active)" if self.active else ""))
+        return "%s [%s, %s] on %s%s" % (self.name, c[0], c[1], self.desktop, (" (active)" if self.active else ""))
 
 active_window_num = int(subprocess.check_output(['xdotool','getactivewindow']).split('\n')[0])
 
@@ -115,7 +118,9 @@ def update():
         lines[i] = filter(lambda x: x, lines[i])
         name = ' '.join(lines[i][7:])
         lines[i] = lines[i][:6]
-        if name in BLACKLIST and lines[1]=="-1":
+        if name in BLACKLIST:
+            continue
+        if name in DESKTOP_BLACKLIST and lines[1]=="-1":
             continue
         windows += [Window(name, lines[i])]
         if windows[-1].num == active_window_num:
@@ -124,7 +129,17 @@ def update():
 def just_this_desktop():
     global windows
     global active_window
-    windows = filter(lambda x: x.desktop == active_window.desktop or x.desktop == "-1", windows)
+    desktop = active_window.desktop
+    # get the active desktop number since window is reporting -1 (sticky)
+    lines = subprocess.check_output(['wmctrl','-d']).split('\n')
+    desktop = 0
+    for idx in range(len(lines)):
+        line = lines[idx][:4]
+        if '*' in line:
+            desktop = idx
+            print idx
+            break
+    windows = filter(lambda x: x.desktop == desktop or x.desktop == -1, windows)
 update()
 
 if sys.argv[1]=="left":
